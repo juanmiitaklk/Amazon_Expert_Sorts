@@ -1,31 +1,28 @@
-Buscador de Precios en Amazon.es
+# Buscador y filtros en Amazon.es
+Aplicación de escritorio en Python para buscar productos en Amazon.es, obtener precios, y ordenarlos .
 
-Aplicación de escritorio en Python para buscar productos en Amazon.es, obtener precios, y ordenarlos con Tkinter.
+## Características
 
-Características
+- Búsqueda automática con Selenium y BeautifulSoup.
+- Extracción de nombre, precio, enlace, €/kg y €/L.
+- Interfaz gráfica para visualizar, ordenar y abrir enlaces.
 
-Búsqueda automática con Selenium y BeautifulSoup.
-
-Extracción de nombre, precio, enlace, €/kg y €/L.
-
-Interfaz gráfica para visualizar, ordenar y abrir enlaces.
-
-Requisitos
-
+## Requisitos
 Python 3.x
+Versión mas reciente de python: 
+-  https://apps.microsoft.com/detail/9pnrbtzxmb4z?hl=en-us&gl=US
 
-Instalar dependencias:
+## Instalar dependencias:
 
 pip install selenium beautifulsoup4 webdriver-manager
 
-Uso
+Uso: Ejecuta:
+- python buscador_precios.py
 
-Ejecuta:
+- Introduce una palabra clave y busca.
 
-python buscador_precios.py
+- Ordena resultados o carga más productos.
 
-Introduce una palabra clave y busca.
-
-Ordena resultados o carga más productos.
-
+---
 Doble clic para abrir enlaces.
+--- 

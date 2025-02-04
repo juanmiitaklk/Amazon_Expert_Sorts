@@ -16,7 +16,7 @@ Versión mas reciente de python:
 
 pip install selenium beautifulsoup4 webdriver-manager
 
-Uso: Ejecuta:
+## Uso: Ejecuta:
 - python buscador_precios.py
 
 - Introduce una palabra clave y busca.

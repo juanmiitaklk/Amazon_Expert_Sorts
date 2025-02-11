@@ -11,28 +11,132 @@ import re
 
 # Lista para almacenar los enlaces guardados
 productos_guardados = []
-# Variable para llevar el seguimiento de la página actual
+# Variable para llevar el seguimiento de la pagina actual
 pagina_actual = 6
+# Variable para almacenar el dominio de Amazon seleccionado
+amazon_domain = "amazon.es"
 
-# Función para buscar precios en Amazon.es y extraer datos automáticamente
+def configurar_estilos():
+    # Definir colores
+    COLOR_PRIMARY = "#2557a7"  
+    COLOR_SECONDARY = "#232f3e"  
+    COLOR_BACKGROUND = "#f3f3f3"  
+    COLOR_TEXT = "#232f3e"  
+    COLOR_BUTTON_HOVER = "#1a4980"  
+
+    # estilos
+    style = ttk.Style()
+    style.theme_use('clam')  
+
+    # ventana principal
+    style.configure(".", 
+                   background=COLOR_BACKGROUND,
+                   foreground=COLOR_TEXT,
+                   font=('Helvetica', 10))
+
+    # botones
+    style.configure("TButton",
+                   background=COLOR_PRIMARY,
+                   foreground="white",
+                   padding=(10, 5),
+                   font=('Helvetica', 10))
+    
+    style.map("TButton",
+              background=[('active', COLOR_BUTTON_HOVER)],
+              foreground=[('active', 'white')])
+
+    # botones de región
+    style.configure("Region.TButton",
+                   padding=10,
+                   width=20,
+                   background=COLOR_PRIMARY,
+                   foreground="white")
+
+    # Estilo para etiquetas
+    style.configure("TLabel",
+                   background=COLOR_BACKGROUND,
+                   foreground=COLOR_TEXT,
+                   font=('Helvetica', 10))
+
+    # Estilo para entradas
+    style.configure("TEntry",
+                   fieldbackground="white",
+                   foreground=COLOR_TEXT,
+                   padding=5)
+
+    # Estilo para el Treeview
+    style.configure("Treeview",
+                   background="white",
+                   foreground=COLOR_TEXT,
+                   fieldbackground="white",
+                   font=('Helvetica', 9))
+    
+    style.configure("Treeview.Heading",
+                   background=COLOR_SECONDARY,
+                   foreground="white",
+                   font=('Helvetica', 10, 'bold'))
+    
+    style.map("Treeview",
+              background=[('selected', COLOR_PRIMARY)],
+              foreground=[('selected', 'white')])
+
+    return COLOR_BACKGROUND
+
+def abrir_selector_idiomas():
+    # Crear una nueva ventana
+    ventana_idiomas = tk.Toplevel(ventana)
+    ventana_idiomas.title("Seleccionar Región de Amazon")
+    ventana_idiomas.geometry("300x400")
+    
+    # Estilo para los botones
+    style = ttk.Style()
+    style.configure("Region.TButton", padding=10, width=20)
+    
+    # Función para actualizar el dominio
+    def cambiar_dominio(nuevo_dominio):
+        global amazon_domain
+        amazon_domain = nuevo_dominio
+        etiqueta_region.config(text=f"Región actual: {amazon_domain}")
+        ventana_idiomas.destroy()
+    
+    # Crear botones para cada región
+    ttk.Button(ventana_idiomas, text="España (amazon.es)", 
+               command=lambda: cambiar_dominio("amazon.es"),
+               style="Region.TButton").pack(pady=10)
+    
+    ttk.Button(ventana_idiomas, text="Francia (amazon.fr)", 
+               command=lambda: cambiar_dominio("amazon.fr"),
+               style="Region.TButton").pack(pady=10)
+    
+    ttk.Button(ventana_idiomas, text="Italia (amazon.it)", 
+               command=lambda: cambiar_dominio("amazon.it"),
+               style="Region.TButton").pack(pady=10)
+    
+    ttk.Button(ventana_idiomas, text="UK (amazon.co.uk)", 
+               command=lambda: cambiar_dominio("amazon.co.uk"),
+               style="Region.TButton").pack(pady=10)
+    
+    ttk.Button(ventana_idiomas, text="EEUU (amazon.com)", 
+               command=lambda: cambiar_dominio("amazon.com"),
+               style="Region.TButton").pack(pady=10)
+
+# Modificar la función buscar_precios para usar el dominio seleccionado
 def buscar_precios():
     global pagina_actual
     palabra_clave = entrada_palabra_clave.get().strip()
     if palabra_clave:
-        etiqueta_resultado.config(text=f"Buscando precios para: {palabra_clave} en Amazon.es")
+        etiqueta_resultado.config(text=f"Buscando precios para: {palabra_clave} en {amazon_domain}")
 
-        # Configuración del navegador con Selenium
         options = webdriver.ChromeOptions()
-        options.add_argument('--headless')  # Ejecutar en modo headless
+        options.add_argument('--headless')
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
-        productos_guardados.clear()  # Limpiar resultados anteriores
+        productos_guardados.clear()
 
-        # Iterar por las primeras 5 páginas de resultados
         for pagina in range(1, 6):
-            url = f'https://www.amazon.es/s?k={palabra_clave.replace(" ", "+")}&page={pagina}'
+            url = f'https://www.{amazon_domain}/s?k={palabra_clave.replace(" ", "+")}&page={pagina}'
             driver.get(url)
-            time.sleep(3)  # Esperar para que la página cargue
+            time.sleep(3)
 
             soup = BeautifulSoup(driver.page_source, 'html.parser')
             productos = soup.find_all('div', {'data-component-type': 's-search-result'})
@@ -40,11 +144,10 @@ def buscar_precios():
             for producto in productos:
                 nombre = producto.h2.text.strip() if producto.h2 else 'Sin nombre'
                 enlace_tag = producto.find('a', href=True)
-                enlace = 'https://www.amazon.es' + enlace_tag['href'] if enlace_tag else 'Sin enlace'
+                enlace = f'https://www.{amazon_domain}' + enlace_tag['href'] if enlace_tag else 'Sin enlace'
                 precio_tag = producto.find('span', 'a-offscreen')
                 precio = precio_tag.text.strip() if precio_tag else '0 €'
 
-                # Calcular €/kg y €/L si es posible
                 precio_por_kg, precio_por_l = extraer_precio_por_unidad(nombre, precio)
 
                 productos_guardados.append({
@@ -56,12 +159,12 @@ def buscar_precios():
                 })
 
         driver.quit()
-        pagina_actual = 6  # Reiniciar el contador de páginas
+        pagina_actual = 6
         actualizar_lista_productos()
     else:
         etiqueta_resultado.config(text="Por favor, introduce una palabra clave.")
 
-# Función para cargar más productos
+# Modificar la función cargar_mas_productos para usar el dominio seleccionado
 def cargar_mas_productos():
     global pagina_actual
     palabra_clave = entrada_palabra_clave.get().strip()
@@ -72,7 +175,7 @@ def cargar_mas_productos():
         options.add_argument('--headless')
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
-        url = f'https://www.amazon.es/s?k={palabra_clave.replace(" ", "+")}&page={pagina_actual}'
+        url = f'https://www.{amazon_domain}/s?k={palabra_clave.replace(" ", "+")}&page={pagina_actual}'
         driver.get(url)
         time.sleep(3)
 
@@ -82,11 +185,10 @@ def cargar_mas_productos():
         for producto in productos:
             nombre = producto.h2.text.strip() if producto.h2 else 'Sin nombre'
             enlace_tag = producto.find('a', href=True)
-            enlace = 'https://www.amazon.es' + enlace_tag['href'] if enlace_tag else 'Sin enlace'
+            enlace = f'https://www.{amazon_domain}' + enlace_tag['href'] if enlace_tag else 'Sin enlace'
             precio_tag = producto.find('span', 'a-offscreen')
             precio = precio_tag.text.strip() if precio_tag else '0 €'
 
-            # Calcular €/kg y €/L si es posible
             precio_por_kg, precio_por_l = extraer_precio_por_unidad(nombre, precio)
 
             productos_guardados.append({
@@ -100,8 +202,8 @@ def cargar_mas_productos():
         driver.quit()
         pagina_actual += 1
         actualizar_lista_productos()
-
-# Función para extraer precio por kg o por L
+        
+# Funcion para extraer precio por kg o por L
 def extraer_precio_por_unidad(nombre, precio):
     nombre = nombre.lower()
     precio_numerico = extraer_precio(precio)
@@ -173,6 +275,17 @@ ventana = tk.Tk()
 ventana.title("Buscador de Precios Automático en Amazon.es")
 ventana.geometry("1000x600")
 
+# Frame superior para controles
+frame_superior = ttk.Frame(ventana)
+frame_superior.pack(fill="x", padx=10, pady=5)
+
+# Botón de idiomas y etiqueta de región actual
+boton_idiomas = ttk.Button(frame_superior, text="Cambiar Región", command=abrir_selector_idiomas)
+boton_idiomas.pack(side="left", padx=5)
+
+etiqueta_region = ttk.Label(frame_superior, text="Región actual: amazon.es")
+etiqueta_region.pack(side="left", padx=5)
+
 # Etiqueta y entrada para la palabra clave
 etiqueta_palabra_clave = ttk.Label(ventana, text="Introduce una palabra clave:")
 etiqueta_palabra_clave.pack(pady=10)
@@ -181,7 +294,7 @@ entrada_palabra_clave = ttk.Entry(ventana, width=50)
 entrada_palabra_clave.pack(pady=5)
 
 # Botón de búsqueda
-boton_buscar = ttk.Button(ventana, text="Buscar en Amazon.es", command=buscar_precios)
+boton_buscar = ttk.Button(ventana, text="Buscar Productos", command=buscar_precios)
 boton_buscar.pack(pady=5)
 
 # Botón para cargar más productos
